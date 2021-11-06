@@ -1,7 +1,7 @@
 package ch.heigvd.api.calc;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,6 +22,8 @@ public class Client {
         System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s%6$s%n");
 
         BufferedReader stdin = null;
+        BufferedWriter stdout = null;
+        Socket clientSocket = null;
 
         /* TODO: Implement the client here, according to your specification
          *   The client has to do the following:
@@ -33,7 +35,44 @@ public class Client {
          *     - read the response line from the server (using BufferedReader.readLine)
          */
 
-        stdin = new BufferedReader(new InputStreamReader(System.in));
 
+        try {
+            clientSocket = new Socket("www.heig-vd.ch", 2021);
+            stdin = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            stdout = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+
+            // Enter data using BufferReader
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            // Reading data using readLine
+            String request = reader.readLine();
+            stdout.write(request);
+            stdout.flush();
+
+            String strAnswer;
+            while((strAnswer = stdin.readLine()) != null) {
+                LOG.log(Level.INFO, strAnswer);
+            }
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, ex.toString(), ex);
+        } finally {
+            try {
+                if (stdout != null) stdout.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+
+            try {
+                if (stdin != null) stdin.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+
+            try {
+                if (clientSocket != null && !clientSocket.isClosed()) clientSocket.close();
+            } catch (IOException ex) {
+                LOG.log(Level.SEVERE, ex.toString(), ex);
+            }
+        }
+        stdin = new BufferedReader(new InputStreamReader(System.in));
     }
 }
